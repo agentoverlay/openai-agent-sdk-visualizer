@@ -1,8 +1,12 @@
 import { useRef, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-// Dynamically import ForceGraph2D with no SSR since it requires window
-const ForceGraph2D = dynamic(() => import('react-force-graph').then(mod => mod.ForceGraph2D), {
+// Import ONLY ForceGraph2D component to avoid A-Frame dependencies
+const ForceGraph2D = dynamic(() => import('react-force-graph').then(mod => {
+  // Only import the ForceGraph2D component to avoid A-Frame dependency issues
+  const { ForceGraph2D } = mod;
+  return ForceGraph2D;
+}), {
   ssr: false
 });
 
@@ -95,10 +99,18 @@ const AgentGraph = ({ data }) => {
   }, [data]);
 
   useEffect(() => {
-    if (fgRef.current && graphData.nodes.length > 0) {
-      // Center and zoom the graph when data changes
-      fgRef.current.zoomToFit(400, 50);
-    }
+    // Wait a bit for the graph to initialize
+    const timer = setTimeout(() => {
+      if (fgRef.current && graphData.nodes.length > 0) {
+        try {
+          fgRef.current.zoomToFit(400);
+        } catch (e) {
+          console.log("Could not zoom to fit", e);
+        }
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [graphData]);
 
   const handleNodeHover = node => {
@@ -115,21 +127,24 @@ const AgentGraph = ({ data }) => {
     <div className="relative w-full h-[600px] border rounded-lg overflow-hidden">
       {graphData.nodes.length > 0 ? (
         <>
-          <ForceGraph2D
-            ref={fgRef}
-            graphData={graphData}
-            nodeLabel={node => node.name}
-            nodeColor={node => node.color}
-            nodeRelSize={6}
-            linkWidth={link => hoveredLink === link ? 3 : 1}
-            linkColor={link => link.type === 'handoff' ? '#4338ca' : '#9ca3af'}
-            linkDirectionalArrowLength={5}
-            linkDirectionalArrowRelPos={1}
-            linkDirectionalParticles={link => link.type === 'handoff' ? 4 : 0}
-            linkDirectionalParticleWidth={2}
-            onNodeHover={handleNodeHover}
-            onLinkHover={handleLinkHover}
-          />
+          {ForceGraph2D && (
+            <ForceGraph2D
+              ref={fgRef}
+              graphData={graphData}
+              nodeLabel={node => node.name}
+              nodeColor={node => node.color}
+              nodeRelSize={6}
+              linkWidth={link => hoveredLink === link ? 3 : 1}
+              linkColor={link => link.type === 'handoff' ? '#4338ca' : '#9ca3af'}
+              linkDirectionalArrowLength={5}
+              linkDirectionalArrowRelPos={1}
+              linkDirectionalParticles={link => link.type === 'handoff' ? 4 : 0}
+              linkDirectionalParticleWidth={2}
+              onNodeHover={handleNodeHover}
+              onLinkHover={handleLinkHover}
+              cooldownTime={3000}
+            />
+          )}
           
           {/* Node info panel */}
           {hoveredNode && (
@@ -149,8 +164,8 @@ const AgentGraph = ({ data }) => {
                     <div className="mt-2">
                       <p className="text-xs font-medium text-gray-600">Tools:</p>
                       <ul className="list-disc list-inside text-xs text-gray-600">
-                        {hoveredNode.data.tools.map(tool => (
-                          <li key={tool}>{tool}</li>
+                        {hoveredNode.data.tools.map((tool, i) => (
+                          <li key={i}>{tool}</li>
                         ))}
                       </ul>
                     </div>
@@ -234,7 +249,7 @@ const AgentGraph = ({ data }) => {
         </>
       ) : (
         <div className="h-full flex items-center justify-center">
-          <p className="text-gray-500">Upload Python files to visualize agent relationships</p>
+          <p className="text-gray-500">Loading data or no data available</p>
         </div>
       )}
     </div>

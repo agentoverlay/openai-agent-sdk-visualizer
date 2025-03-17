@@ -3,9 +3,9 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import FileUploader from '../components/FileUploader';
 
-// Dynamically import the AgentGraph component to avoid SSR issues with D3
-const AgentGraph = dynamic(() => import('../components/AgentGraph'), {
-  ssr: false,
+// Dynamically import the SimpleGraph component to avoid SSR issues
+const SimpleGraph = dynamic(() => import('../components/custom/SimpleGraph'), {
+  ssr: false
 });
 
 // Import the client-side parser
@@ -82,7 +82,7 @@ export default function Home() {
           
           <div className="mb-6">
             <h2 className="text-xl font-medium text-gray-800 mb-3">Agent Relationship Graph</h2>
-            <AgentGraph data={graphData} />
+            {graphData && <SimpleGraph data={graphData} />}
           </div>
           
           {graphData && (

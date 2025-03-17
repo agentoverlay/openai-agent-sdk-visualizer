@@ -2,7 +2,7 @@
 
 A visualization tool that reads OpenAI Agents SDK Python files statically and generates an interactive visualization showing the graph of agents, handoffs, guardrails, contexts, and tools.
 
-![Agent Visualization](https://via.placeholder.com/800x400?text=Agent+Visualization+Graph)
+![Agent Visualization](./sample.png)
 
 ## Features
 
